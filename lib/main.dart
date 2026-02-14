@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:muslim_app/view/home_navigation_page.dart';
 import 'package:provider/provider.dart';
 
@@ -14,7 +15,13 @@ import 'viewmodel/quran_view_model.dart';
 import 'repository/doa_repository.dart';
 import 'viewmodel/doa_view_model.dart';
 
-void main() {
+// Chat baru
+import 'repository/chat_repository.dart';
+import 'viewmodel/chat_view_model.dart';
+
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+
   runApp(const MyApp());
 }
 
@@ -43,16 +50,21 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<DoaViewModel>(
           create: (context) => DoaViewModel(context.read<DoaRepository>()),
         ),
+
+        // Chat
+        Provider<ChatRepository>(create: (_) => ChatRepository()),
+        ChangeNotifierProvider<ChatViewModel>(
+          create: (context) => ChatViewModel(context.read<ChatRepository>()),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Muslim App - MVVM',
         theme: ThemeData(
           useMaterial3: true,
-          colorSchemeSeed: const Color.fromARGB(255, 37, 0, 78)
-         
+          colorSchemeSeed: const Color.fromARGB(255, 37, 0, 78),
         ),
-        home: const HomeNavigationPage(), 
+        home: const HomeNavigationPage(),
       ),
     );
   }

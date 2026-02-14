@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'shalat_page.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
+import 'chat_page.dart';
 
 class HomeNavigationPage extends StatefulWidget {
   const HomeNavigationPage({super.key});
@@ -13,10 +14,11 @@ class HomeNavigationPage extends StatefulWidget {
 class _HomeNavigationPageState extends State<HomeNavigationPage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    ShalatPage(),
-    QuranPage(),
-    DoaPage(),
+  static final List<Widget> _pages = <Widget>[
+    const ShalatPage(),
+    const QuranPage(),
+    const DoaPage(),
+    ChatPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -37,6 +39,10 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
           ),
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Al-Qur\'an'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Doa'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'Asisten AI',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).colorScheme.primary,
