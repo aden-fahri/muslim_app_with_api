@@ -3,6 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:muslim_app/view/home_navigation_page.dart';
 import 'package:provider/provider.dart';
 
+//theme
+import 'core/theme.dart';
+
 // Shalat (yang sudah ada)
 import 'repository/shalat_repository.dart';
 import 'viewmodel/shalat_view_model.dart';
@@ -74,10 +77,8 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Muslim App - MVVM',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color.fromARGB(255, 37, 0, 78),
-        ),
+        theme: unguLightTheme,
+        themeMode: ThemeMode.system,
         home: const HomeNavigationPage(),
       ),
     );

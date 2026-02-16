@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:muslim_app/model/quran/surat.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/quran_view_model.dart';
-// import 'package:audioplayers/audioplayers.dart'; // uncomment kalau pakai audio
 
 class SuratDetailPage extends StatefulWidget {
   final Surat surat;
-
   const SuratDetailPage({super.key, required this.surat});
 
   @override
@@ -14,110 +12,226 @@ class SuratDetailPage extends StatefulWidget {
 }
 
 class _SuratDetailPageState extends State<SuratDetailPage> {
-  // AudioPlayer? _audioPlayer; // kalau pakai audio
-
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      context.read<QuranViewModel>().fetchDetailSurat(widget.surat.nomor);
-    });
-    // _audioPlayer = AudioPlayer(); // init kalau pakai
+    Future.microtask(
+      () => context.read<QuranViewModel>().fetchDetailSurat(widget.surat.nomor),
+    );
   }
-
-  // @override
-  // void dispose() {
-  //   _audioPlayer?.dispose();
-  //   super.dispose();
-  // }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.surat.namaLatin} (${widget.surat.nama})'),
-      ),
+      appBar: AppBar(title: Text(widget.surat.namaLatin)),
       body: Consumer<QuranViewModel>(
         builder: (context, vm, child) {
-          if (vm.isLoading) {
+          if (vm.isLoading)
             return const Center(child: CircularProgressIndicator());
-          }
-          if (vm.error != null) {
-            return Center(child: Text('Error: ${vm.error}'));
-          }
-          if (vm.suratDetail == null) {
-            return const Center(child: Text('Tidak ada data detail'));
-          }
+          if (vm.suratDetail == null)
+            return const Center(child: Text('Data tidak ditemukan'));
 
           final detail = vm.suratDetail!;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Info Surah
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Arti: ${detail.arti}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text('Jumlah Ayat: ${detail.jumlahAyat}'),
-                        Text('Tempat Turun: ${detail.tempatTurun}'),
-                        const SizedBox(height: 8),
-                        Text(
-                          detail.deskripsi,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+
+          return CustomScrollView(
+            slivers: [
+              // --- Header Info Surat ---
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [colorScheme.primary, colorScheme.secondary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                // List Ayat
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: detail.ayat.length,
-                  itemBuilder: (context, index) {
-                    final ayat = detail.ayat[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(24),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              ayat.teksArab,
-                              textDirection: TextDirection.rtl,
+                              detail.namaLatin,
                               style: const TextStyle(
-                                fontSize: 24,
-                                fontFamily: 'Uthmani',
-                              ), // tambah font Arab di pubspec
+                                color: Colors.white,
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            const SizedBox(height: 8),
-                            Text('Latin: ${ayat.teksLatin}'),
-                            Text('Arti: ${ayat.teksIndonesia}'),
-                            // Tombol Audio (opsional)
-                            // IconButton(
-                            //   icon: const Icon(Icons.play_arrow),
-                            //   onPressed: () async {
-                            //     await _audioPlayer?.play(UrlSource(ayat.audio));
-                            //   },
-                            // ),
+                            Text(
+                              detail.arti,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Divider(color: Colors.white24, height: 32),
+                            Text(
+                              '${detail.tempatTurun.toUpperCase()} • ${detail.jumlahAyat} AYAT',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            if (widget.surat.nomor != 1 &&
+                                widget.surat.nomor != 9)
+                              const Text(
+                                "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontFamily: 'Uthmani',
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                    );
-                  },
+                      // --- Fitur Penjelasan/Deskripsi Surat (Expansion) ---
+                      Theme(
+                        data: theme.copyWith(dividerColor: Colors.transparent),
+                        child: ExpansionTile(
+                          title: const Text(
+                            'Penjelasan Surat',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          iconColor: Colors.white,
+                          collapsedIconColor: Colors.white70,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                              child: Text(
+                                // Membersihkan tag HTML jika ada di deskripsi
+                                detail.deskripsi.replaceAll(
+                                  RegExp(r'<[^>]*>|&[^;]+;'),
+                                  '',
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.justify,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+
+              // --- List Ayat ---
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final ayat = detail.ayat[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Nomor Ayat & Action Bar
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceVariant.withOpacity(
+                                0.5,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: colorScheme.primary,
+                                  child: Text(
+                                    ayat.nomorAyat.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.play_circle_outline,
+                                  size: 20,
+                                  color: colorScheme.primary,
+                                ),
+                                const SizedBox(width: 16),
+                                Icon(
+                                  Icons.bookmark_border_rounded,
+                                  size: 20,
+                                  color: colorScheme.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // 1. Teks Arab
+                          Text(
+                            ayat.teksArab,
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              height: 2,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2A0E5A),
+                              fontFamily: 'Uthmani',
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // 2. Teks Latin (KEMBALI ADA)
+                          Text(
+                            ayat.teksLatin,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // 3. Teks Terjemahan/Arti
+                          Text(
+                            ayat.teksIndonesia,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF2A0E5A),
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Divider(color: Colors.black12),
+                        ],
+                      ),
+                    );
+                  }, childCount: detail.ayat.length),
+                ),
+              ),
+            ],
           );
         },
       ),

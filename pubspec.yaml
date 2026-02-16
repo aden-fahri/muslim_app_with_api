@@ -15,6 +15,7 @@ dependencies:
   flutter_qiblah: ^3.2.0
   permission_handler: ^12.0.1
   provider: ^6.1.5+1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
