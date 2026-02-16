@@ -3,6 +3,7 @@ import 'shalat_page.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
 import 'chat_page.dart';
+import 'qiblat_page.dart';
 
 class HomeNavigationPage extends StatefulWidget {
   const HomeNavigationPage({super.key});
@@ -15,10 +16,11 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
   int _selectedIndex = 0;
 
   static final List<Widget> _pages = <Widget>[
-    const ShalatPage(),
-    const QuranPage(),
-    const DoaPage(),
+    ShalatPage(),
+    QuranPage(),
+    DoaPage(),
     ChatPage(),
+    QiblatPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -43,9 +45,15 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
             icon: Icon(Icons.chat_bubble_outline),
             label: 'Asisten AI',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.explore_outlined),
+            label: 'Kiblat',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).colorScheme.primary,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
       ),
     );

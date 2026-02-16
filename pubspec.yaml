@@ -9,17 +9,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_dotenv: ^5.0.2
+  flutter_dotenv: ^6.0.0
   google_generative_ai: ^0.4.7
   http: ^1.6.0
   flutter_qiblah: ^3.2.0
-  permission_handler: ^11.3.0
+  permission_handler: ^12.0.1
   provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

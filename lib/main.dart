@@ -19,6 +19,11 @@ import 'viewmodel/doa_view_model.dart';
 import 'repository/chat_repository.dart';
 import 'viewmodel/chat_view_model.dart';
 
+// Qiblat baru
+import 'repository/qiblat_repository.dart';
+import 'services/qiblat_service.dart';
+import 'viewmodel/qiblat_view_model.dart';
+
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
@@ -55,6 +60,15 @@ class MyApp extends StatelessWidget {
         Provider<ChatRepository>(create: (_) => ChatRepository()),
         ChangeNotifierProvider<ChatViewModel>(
           create: (context) => ChatViewModel(context.read<ChatRepository>()),
+        ),
+
+        // Qiblat
+        Provider<QiblatRepository>(
+          create: (_) => QiblatRepository(QiblatService()),
+        ),
+        ChangeNotifierProvider<QiblatViewModel>(
+          create: (context) =>
+              QiblatViewModel(context.read<QiblatRepository>()),
         ),
       ],
       child: MaterialApp(
