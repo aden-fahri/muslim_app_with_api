@@ -27,6 +27,10 @@ import 'repository/qiblat_repository.dart';
 import 'services/qiblat_service.dart';
 import 'viewmodel/qiblat_view_model.dart';
 
+// Asmaul Husna 
+import 'repository/asmaul_husna_repository.dart';
+import 'viewmodel/asmaul_husna_view_model.dart';
+
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
@@ -72,6 +76,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<QiblatViewModel>(
           create: (context) =>
               QiblatViewModel(context.read<QiblatRepository>()),
+        ),
+        // Tambahkan ini
+        Provider<AsmaulHusnaRepository>(create: (_) => AsmaulHusnaRepository()),
+        ChangeNotifierProvider<AsmaulHusnaViewModel>(
+          create: (context) =>
+              AsmaulHusnaViewModel(context.read<AsmaulHusnaRepository>()),
         ),
       ],
       child: MaterialApp(

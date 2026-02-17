@@ -3,6 +3,7 @@ import 'quran_page.dart';
 import 'doa_page.dart';
 import 'chat_page.dart';
 import 'qiblat_page.dart';
+import 'asmaul_husna_page.dart';
 import 'dashboard_page.dart';
 
 class HomeNavigationPage extends StatefulWidget {
@@ -20,6 +21,7 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
     QuranPage(),
     DoaPage(),
     ChatPage(),
+    AsmaulHusnaPage(),
     QiblatPage(),
   ];
 
@@ -65,6 +67,10 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.psychology_alt_rounded),
               label: 'Asisten AI',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.psychology_alt_rounded),
+              label: 'Asmaul_hus',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.explore_rounded),
