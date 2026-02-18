@@ -17,6 +17,13 @@ dependencies:
   provider: ^6.1.5+1
   intl: ^0.20.2
 
+  # Supabase
+  supabase_flutter: ^2.10.2
+  connectivity_plus: ^6.0.0
+  app_links: ^3.5.0
+  uuid: ^4.5.0
+  shared_preferences: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

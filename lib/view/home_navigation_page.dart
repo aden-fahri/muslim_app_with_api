@@ -70,7 +70,7 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.psychology_alt_rounded),
-              label: 'Asmaul_hus',
+              label: 'Asmaul_husna',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.explore_rounded),

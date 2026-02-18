@@ -3,6 +3,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:muslim_app/view/home_navigation_page.dart';
 import 'package:provider/provider.dart';
 
+// Subabase (database)
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app_links/app_links.dart';
+// login
+import 'view/auth/login_page.dart';
+
 //theme
 import 'core/theme.dart';
 
@@ -27,13 +33,28 @@ import 'repository/qiblat_repository.dart';
 import 'services/qiblat_service.dart';
 import 'viewmodel/qiblat_view_model.dart';
 
-// Asmaul Husna 
+// Asmaul Husna
 import 'repository/asmaul_husna_repository.dart';
 import 'viewmodel/asmaul_husna_view_model.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
+  await Supabase.initialize(
+    url: 'SUPABASE_URL', // URL project
+    anonKey: 'SUPABASE_ANON_KEY', // anon public key
+  );
+
+  // Listener auth state change
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    final event = data.event;
+    final session = data.session;
+
+    print('Auth event: $event'); // debug di console
+
+    if (event == AuthChangeEvent.signedIn) {}
+  });
   runApp(const MyApp());
 }
 
@@ -42,6 +63,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cek session awal untuk redirect kalau sudah login
+    final session = Supabase.instance.client.auth.currentSession;
+
     return MultiProvider(
       providers: [
         // jadwal sholat
@@ -77,7 +101,8 @@ class MyApp extends StatelessWidget {
           create: (context) =>
               QiblatViewModel(context.read<QiblatRepository>()),
         ),
-        // Tambahkan ini
+
+        // Asmaul Husna
         Provider<AsmaulHusnaRepository>(create: (_) => AsmaulHusnaRepository()),
         ChangeNotifierProvider<AsmaulHusnaViewModel>(
           create: (context) =>
@@ -89,7 +114,9 @@ class MyApp extends StatelessWidget {
         title: 'Muslim App - MVVM',
         theme: unguLightTheme,
         themeMode: ThemeMode.system,
-        home: const HomeNavigationPage(),
+        home: session == null
+            ? const LoginPage() // Redirect ke login kalau belum login
+            : const HomeNavigationPage(),
       ),
     );
   }
