@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
+import 'shalat_page.dart';
 import 'chat_page.dart';
 import 'qiblat_page.dart';
 import 'asmaul_husna_page.dart';
 import 'dashboard_page.dart';
+import 'ramadhan/ramadhan_dashboard_card.dart';
 
 class HomeNavigationPage extends StatefulWidget {
   const HomeNavigationPage({super.key});
@@ -23,6 +25,8 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
     ChatPage(),
     AsmaulHusnaPage(),
     QiblatPage(),
+    ShalatPage(),
+    RamadhanDashboardCard(),
   ];
 
   void _onItemTapped(int index) {
@@ -75,6 +79,10 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.explore_rounded),
               label: 'Kiblat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.explore_rounded),
+              label: 'jadwal sholat',
             ),
           ],
           currentIndex: _selectedIndex,

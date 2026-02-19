@@ -37,13 +37,18 @@ import 'viewmodel/qiblat_view_model.dart';
 import 'repository/asmaul_husna_repository.dart';
 import 'viewmodel/asmaul_husna_view_model.dart';
 
+// Ramadhan
+import 'repository/ramadhan_repository.dart';
+import 'viewmodel/ramadhan_view_model.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
   await Supabase.initialize(
-    url: 'SUPABASE_URL', // URL project
-    anonKey: 'SUPABASE_ANON_KEY', // anon public key
+    url: 'YOUR_URL', // URL project
+    anonKey:
+        'YOUR_ANON_KEY', // anon public key
   );
 
   // Listener auth state change
@@ -107,6 +112,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AsmaulHusnaViewModel>(
           create: (context) =>
               AsmaulHusnaViewModel(context.read<AsmaulHusnaRepository>()),
+        ),
+
+        // Catatan Ramadhan
+        Provider<RamadhanRepository>(create: (_) => RamadhanRepository()),
+        ChangeNotifierProvider<RamadhanViewModel>(
+          create: (context) => RamadhanViewModel(context.read<RamadhanRepository>()),
         ),
       ],
       child: MaterialApp(
