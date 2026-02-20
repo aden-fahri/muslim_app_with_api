@@ -16,6 +16,9 @@ class _RamadhanInfakPageState extends State<RamadhanInfakPage> {
   final _kategoriController = TextEditingController();
   final _catatanController = TextEditingController();
 
+  // Daftar nominal cepat untuk memudahkan user
+  final List<int> _quickNominals = [2000, 5000, 10000, 20000, 50000, 100000];
+
   @override
   void dispose() {
     _nominalController.dispose();
@@ -26,155 +29,180 @@ class _RamadhanInfakPageState extends State<RamadhanInfakPage> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF7C5ABF);
+    const deepPurple = Color(0xFF2A0E5A);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFF),
-      appBar: AppBar(
-        title: const Text('Catatan Infak', 
-          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2A0E5A))),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF2A0E5A), size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: const Color(0xFFF8F9FE),
       body: Consumer<RamadhanViewModel>(
         builder: (context, vm, child) {
           final infakList = vm.todayInfak;
 
           return Column(
             children: [
-              // --- FORM INPUT CARD ---
-              _buildInputCard(context, vm),
+              // --- CUSTOM HEADER ---
+              _buildHeader(context, primaryColor),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Row(
-                  children: [
-                    Icon(Icons.history_rounded, size: 18, color: Colors.black38),
-                    SizedBox(width: 8),
-                    Text('Riwayat Hari Ini', 
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black38)),
-                  ],
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // --- FORM INPUT ---
+                      _buildInputCard(context, vm, primaryColor),
+
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(24, 8, 24, 16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.history_rounded, size: 20, color: Colors.black38),
+                            SizedBox(width: 8),
+                            Text(
+                              'Riwayat Kebaikan Hari Ini',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black45),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // --- LIST RIWAYAT ---
+                      infakList.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              itemCount: infakList.length,
+                              itemBuilder: (context, index) {
+                                final item = infakList[index];
+                                return _buildInfakItem(index, item, vm, primaryColor);
+                              },
+                            ),
+                      const SizedBox(height: 100), // Spasi agar tidak tertutup bottom bar
+                    ],
+                  ),
                 ),
               ),
-
-              // --- LIST RIWAYAT ---
-              Expanded(
-                child: infakList.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        itemCount: infakList.length,
-                        itemBuilder: (context, index) {
-                          final item = infakList[index];
-                          final nominal = item['nominal'] as int;
-                          final kategori = item['kategori'] as String? ?? 'Umum';
-                          final catatan = item['catatan'] as String? ?? '-';
-                          final createdAt = DateTime.parse(item['created_at'] as String);
-
-                          return _buildInfakItem(index, nominal, kategori, catatan, createdAt, vm);
-                        },
-                      ),
-              ),
-
-              // --- TOTAL BOTTOM BAR ---
-              _buildTotalBottomBar(vm.totalInfakHariIni),
             ],
           );
         },
       ),
+      // --- TOTAL BOTTOM BAR ---
+      bottomSheet: Consumer<RamadhanViewModel>(
+        builder: (context, vm, child) => _buildTotalBottomBar(vm.totalInfakHariIni, primaryColor),
+      ),
     );
   }
 
-  Widget _buildInputCard(BuildContext context, RamadhanViewModel vm) {
+  Widget _buildHeader(BuildContext context, Color primary) {
+    return Container(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, bottom: 20, left: 10, right: 10),
+      decoration: BoxDecoration(
+        color: primary,
+        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          ),
+          const Expanded(
+            child: Text(
+              'Tabungan Infak',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputCard(BuildContext context, RamadhanViewModel vm, Color primary) {
     return Container(
       margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7C5ABF).withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
+          BoxShadow(color: primary.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Input Nominal dengan Style Rupiah yang Besar
           TextField(
             controller: _nominalController,
             keyboardType: TextInputType.number,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Color(0xFF2A0E5A)),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF7C5ABF)),
-              labelText: 'Nominal Infak',
-              hintText: 'Contoh: 50000',
-              filled: true,
-              fillColor: const Color(0xFFF8F7FF),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              prefixText: 'Rp ',
+              prefixStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primary),
+              labelText: 'Jumlah Nominal',
+              labelStyle: const TextStyle(fontSize: 14, color: Colors.black38),
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey[200]!)),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primary)),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+
+          // Quick Selection Nominal
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _quickNominals.map((n) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(NumberFormat.compactCurrency(locale: 'id_ID', symbol: '').format(n)),
+                    selected: false,
+                    onSelected: (_) => setState(() => _nominalController.text = n.toString()),
+                    backgroundColor: primary.withOpacity(0.05),
+                    labelStyle: TextStyle(color: primary, fontWeight: FontWeight.bold, fontSize: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    side: BorderSide.none,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Row Kategori & Catatan
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _kategoriController,
-                  decoration: InputDecoration(
-                    labelText: 'Kategori',
-                    filled: true,
-                    fillColor: const Color(0xFFF8F7FF),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  ),
-                ),
+                child: _miniTextField(_kategoriController, 'Kategori', Icons.category_outlined),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
-                  controller: _catatanController,
-                  decoration: InputDecoration(
-                    labelText: 'Catatan',
-                    filled: true,
-                    fillColor: const Color(0xFFF8F7FF),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  ),
-                ),
+                child: _miniTextField(_catatanController, 'Catatan', Icons.edit_note_rounded),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
+
+          // Tombol Simpan
           SizedBox(
             width: double.infinity,
-            height: 50,
+            height: 54,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C5ABF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                backgroundColor: primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                 elevation: 0,
               ),
-              onPressed: () async {
-                final nominalStr = _nominalController.text.trim();
-                if (nominalStr.isEmpty) return;
-                final nominal = int.tryParse(nominalStr);
-                if (nominal == null || nominal <= 0) return;
-
-                await vm.addInfak(
-                  nominal: nominal,
-                  kategori: _kategoriController.text.trim(),
-                  catatan: _catatanController.text.trim(),
-                );
-
-                _nominalController.clear();
-                _kategoriController.clear();
-                _catatanController.clear();
-                FocusScope.of(context).unfocus();
-              },
-              child: const Text('Simpan Kebaikan', 
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              onPressed: () => _handleSave(vm),
+              child: const Text(
+                'Simpan Kebaikan',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           ),
         ],
@@ -182,31 +210,73 @@ class _RamadhanInfakPageState extends State<RamadhanInfakPage> {
     );
   }
 
-  Widget _buildInfakItem(int index, int nominal, String kategori, String catatan, DateTime time, RamadhanViewModel vm) {
+  Widget _miniTextField(TextEditingController controller, String label, IconData icon) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, size: 18, color: const Color(0xFF7C5ABF)),
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 12),
+        filled: true,
+        fillColor: const Color(0xFFF8F7FF),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+      ),
+    );
+  }
+
+  void _handleSave(RamadhanViewModel vm) async {
+    final nominalStr = _nominalController.text.trim();
+    if (nominalStr.isEmpty) return;
+    final nominal = int.tryParse(nominalStr);
+    if (nominal == null || nominal <= 0) return;
+
+    await vm.addInfak(
+      nominal: nominal,
+      kategori: _kategoriController.text.trim().isEmpty ? 'Umum' : _kategoriController.text.trim(),
+      catatan: _catatanController.text.trim(),
+    );
+
+    _nominalController.clear();
+    _kategoriController.clear();
+    _catatanController.clear();
+    FocusScope.of(context).unfocus();
+  }
+
+  Widget _buildInfakItem(int index, Map<String, dynamic> item, RamadhanViewModel vm, Color primary) {
+    final nominal = item['nominal'] as int;
+    final kategori = item['kategori'] as String? ?? 'Umum';
+    final time = DateTime.parse(item['created_at'] as String);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFF0EDFF)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFFF3EFFF), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.favorite_rounded, color: Color(0xFF7C5ABF), size: 20),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: primary.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(Icons.volunteer_activism_rounded, color: primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Rp ${NumberFormat('#,###', 'id_ID').format(nominal)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2A0E5A))),
-                Text('$kategori • $catatan', 
-                  style: const TextStyle(color: Colors.black38, fontSize: 12), overflow: TextOverflow.ellipsis),
+                Text(
+                  'Rp ${NumberFormat('#,###', 'id_ID').format(nominal)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2A0E5A)),
+                ),
+                Text(
+                  kategori,
+                  style: const TextStyle(color: Colors.black45, fontSize: 12, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
           ),
@@ -214,10 +284,10 @@ class _RamadhanInfakPageState extends State<RamadhanInfakPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(DateFormat('HH:mm').format(time), style: const TextStyle(color: Colors.black26, fontSize: 11)),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               GestureDetector(
                 onTap: () => vm.removeInfak(index),
-                child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                child: Icon(Icons.cancel_rounded, color: Colors.red[200], size: 20),
               ),
             ],
           )
@@ -228,31 +298,45 @@ class _RamadhanInfakPageState extends State<RamadhanInfakPage> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.volunteer_activism_outlined, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text('Belum ada infak hari ini', style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w500)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: Column(
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 60, color: Colors.grey[200]),
+            const SizedBox(height: 16),
+            const Text('Ayo mulai berbagi hari ini!', style: TextStyle(color: Colors.black26)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTotalBottomBar(int total) {
+  Widget _buildTotalBottomBar(int total, Color primary) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))],
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(35), topRight: Radius.circular(35)),
+        boxShadow: [
+          BoxShadow(color: primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5)),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Total Hari Ini', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
-          Text('Rp ${NumberFormat('#,###', 'id_ID').format(total)}',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF7C5ABF))),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Total Terkumpul', style: TextStyle(color: Colors.black38, fontSize: 12)),
+              const SizedBox(height: 2),
+              Text(
+                'Rp ${NumberFormat('#,###', 'id_ID').format(total)}',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primary),
+              ),
+            ],
+          ),
+          Icon(Icons.verified_rounded, color: Colors.green[400], size: 32),
         ],
       ),
     );

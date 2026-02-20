@@ -105,4 +105,57 @@ class RamadhanRepository {
       'infak': currentInfak,
     }, onConflict: 'user_id,date');
   }
+
+    Future<void> addCeramah(String date, Map<String, dynamic> ceramahItem) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception('User belum login');
+
+    final response = await _client
+        .from('ramadhan_entries')
+        .select('ceramah')
+        .eq('user_id', user.id)
+        .eq('date', date)
+        .maybeSingle();
+
+    List<dynamic> currentCeramah = [];
+    if (response != null && response['ceramah'] != null) {
+      currentCeramah = List.from(response['ceramah']);
+    }
+
+    currentCeramah.add(ceramahItem);
+
+    await _client.from('ramadhan_entries').upsert({
+      'user_id': user.id,
+      'date': date,
+      'ceramah': currentCeramah,
+    }, onConflict: 'user_id,date');
+  }
+
+  Future<void> removeCeramah(String date, int index) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception('User belum login');
+
+    final response = await _client
+        .from('ramadhan_entries')
+        .select('ceramah')
+        .eq('user_id', user.id)
+        .eq('date', date)
+        .maybeSingle();
+
+    if (response == null || response['ceramah'] == null) return;
+
+    List<dynamic> currentCeramah = List.from(response['ceramah']);
+
+    if (index < 0 || index >= currentCeramah.length) {
+      throw Exception('Index ceramah tidak valid: $index');
+    }
+
+    currentCeramah.removeAt(index);
+
+    await _client.from('ramadhan_entries').upsert({
+      'user_id': user.id,
+      'date': date,
+      'ceramah': currentCeramah,
+    }, onConflict: 'user_id,date');
+  }
 }

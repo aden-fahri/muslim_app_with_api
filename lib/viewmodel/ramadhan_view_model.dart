@@ -123,13 +123,104 @@ class RamadhanViewModel extends ChangeNotifier {
     }
   }
 
-  // Tambahkan method addCeramah kalau nanti mau (untuk sekarang kosongkan dulu kalau belum dipakai)
   Future<void> addCeramah({
     required String tema,
-    String? sumber,
-    int? durasiMenit,
+    required String sumber,
+    required int durasiMenit,
+    required String rangkuman,
   }) async {
-    // Implementasi mirip addInfak, tapi untuk ceramah
-    // ... (bisa ditambah nanti)
+    if (_todayEntry == null) return;
+
+    final newItem = {
+      'tema': tema.trim(),
+      'sumber': sumber.trim(),
+      'durasi': durasiMenit,
+      'rangkuman': rangkuman.trim(), 
+      'created_at': DateTime.now().toIso8601String(),
+    };
+
+    final updatedCeramah = [..._todayEntry!.ceramah, newItem];
+
+    _todayEntry = RamadhanEntry(
+      date: _todayEntry!.date,
+      sholat: _todayEntry!.sholat,
+      infak: _todayEntry!.infak,
+      ceramah: updatedCeramah,
+    );
+
+    notifyListeners();
+
+    try {
+      await _repository.addCeramah(_todayEntry!.date, newItem);
+    } catch (e) {
+      _error = 'Gagal simpan ceramah: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeCeramah(int index) async {
+    if (_todayEntry == null || index < 0 || index >= _todayEntry!.ceramah.length) {
+      return;
+    }
+
+    try {
+      await _repository.removeCeramah(_todayEntry!.date, index);
+
+      final updatedCeramah = List<Map<String, dynamic>>.from(_todayEntry!.ceramah)..removeAt(index);
+
+      _todayEntry = RamadhanEntry(
+        date: _todayEntry!.date,
+        sholat: _todayEntry!.sholat,
+        infak: _todayEntry!.infak,
+        ceramah: updatedCeramah,
+      );
+
+      notifyListeners();
+    } catch (e) {
+      _error = 'Gagal hapus ceramah: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> editCeramah({
+    required int index,
+    required String tema,
+    required String sumber,
+    required int durasiMenit,
+    required String rangkuman,
+  }) async {
+    if (_todayEntry == null || index < 0 || index >= _todayEntry!.ceramah.length) return;
+
+    // Ambil data lama untuk mempertahankan 'created_at'
+    final oldItem = _todayEntry!.ceramah[index];
+
+    final updatedItem = {
+      'tema': tema.trim(),
+      'sumber': sumber.trim(),
+      'durasi': durasiMenit,
+      'rangkuman': rangkuman.trim(),
+      'created_at': oldItem['created_at'],
+      'updated_at': DateTime.now().toIso8601String(), // catat waktu edit
+    };
+
+    final updatedCeramahList = List<Map<String, dynamic>>.from(_todayEntry!.ceramah);
+    updatedCeramahList[index] = updatedItem;
+
+    _todayEntry = RamadhanEntry(
+      date: _todayEntry!.date,
+      sholat: _todayEntry!.sholat,
+      infak: _todayEntry!.infak,
+      ceramah: updatedCeramahList,
+    );
+
+    notifyListeners();
+
+    try {
+      // Kita simpan ulang seluruh entry atau panggil fungsi repository khusus update
+      await _repository.saveEntry(_todayEntry!); 
+    } catch (e) {
+      _error = 'Gagal update ceramah: $e';
+      notifyListeners();
+    }
   }
 }

@@ -7,6 +7,7 @@ import '../model/shalat_schedule_response.dart';
 import '../viewmodel/shalat_view_model.dart';
 import '../view/ramadhan/ramadhan_dashboard_card.dart';
 import 'ramadhan/ramadhan_infak_card.dart';
+import 'ramadhan/ramadhan_ceramah_card.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -128,6 +129,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       const RamadhanDashboardCard(),
                       const SizedBox(height: 16),
                       const RamadhanInfakCard(),
+                      const SizedBox(height: 16),
+                      const RamadhanCeramahCard(),
                       const SizedBox(height: 32),
 
                       // --- Jadwal Sholat Section (Tanpa Klik) ---
