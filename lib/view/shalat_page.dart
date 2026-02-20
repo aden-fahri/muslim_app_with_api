@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../model/shalat_schedule_response.dart';
 import '../viewmodel/shalat_view_model.dart';
+import 'jadwal shalat/jadwal_shalat_card.dart';
 
 class ShalatPage extends StatefulWidget {
   const ShalatPage({super.key});
@@ -20,7 +21,7 @@ class _ShalatPageState extends State<ShalatPage> {
   @override
   void initState() {
     super.initState();
-    // Update timer setiap detik untuk countdown
+    // Update timer setiap detik untuk countdown yang real-time
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {
@@ -52,12 +53,11 @@ class _ShalatPageState extends State<ShalatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5FC), // Mengikuti Theme: surface color
+      backgroundColor: const Color(0xFFF8F5FC),
       appBar: AppBar(
         title: const Text('Jadwal Shalat'),
+        elevation: 0,
         centerTitle: true,
         actions: [
           IconButton(
@@ -66,66 +66,90 @@ class _ShalatPageState extends State<ShalatPage> {
           ),
         ],
       ),
-      body: Material(
-        type: MaterialType.transparency,
-        child: Consumer<ShalatViewModel>(
-          builder: (context, vm, child) {
-            if (vm.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      body: Consumer<ShalatViewModel>(
+        builder: (context, vm, child) {
+          if (vm.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            if (vm.error != null) {
-              return _buildErrorUI(vm);
-            }
+          if (vm.error != null) {
+            return _buildErrorUI(vm);
+          }
 
-            // Mencari data hari ini
-            final todayStr = DateFormat('yyyy-MM-dd').format(_currentTime);
-            final ShalatDaySchedule? todaySchedule = vm.schedules.firstWhere(
-              (s) => s.date == todayStr,
-              orElse: () => ShalatDaySchedule(
-                tanggal: 'Data tidak ditemukan',
-                imsak: '', subuh: '', terbit: '', dhuha: '',
-                dzuhur: '', ashar: '', maghrib: '', isya: '', date: todayStr,
+          // Mencari data hari ini
+          final todayStr = DateFormat('yyyy-MM-dd').format(_currentTime);
+          final ShalatDaySchedule todaySchedule = vm.schedules.firstWhere(
+            (s) => s.date == todayStr,
+            orElse: () => ShalatDaySchedule(
+              tanggal: 'Data tidak ditemukan',
+              imsak: '--:--', subuh: '--:--', terbit: '--:--', dhuha: '--:--',
+              dzuhur: '--:--', ashar: '--:--', maghrib: '--:--', isya: '--:--', 
+              date: todayStr,
+            ),
+          );
+
+          final nextPrayer = _calculateNextPrayer(todaySchedule);
+
+          return Column(
+            children: [
+              // Header Countdown ditaruh paling atas agar informatif
+              _buildHeader(nextPrayer),
+              
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  "Waktu Shalat Hari Ini",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF4A3A6A),
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-            );
 
-            final nextPrayer = _calculateNextPrayer(todaySchedule!);
-
-            return Column(
-              children: [
-                _buildHeader(nextPrayer),
-                const Padding(
-                  padding: EdgeInsets.only(top: 24, bottom: 16),
-                  child: Text(
-                    "Waktu Shalat Hari Ini",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold, 
-                      color: Color(0xFF4A3A6A), // onSurfaceVariant
-                      letterSpacing: 0.5,
-                    ),
+              // List Jadwal menggunakan widget JadwalShalatCard yang rapi
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      JadwalShalatCard(label: 'Imsak', time: todaySchedule.imsak),
+                      JadwalShalatCard(
+                        label: 'Subuh', 
+                        time: todaySchedule.subuh, 
+                        isNext: nextPrayer['name'] == 'Subuh'
+                      ),
+                      JadwalShalatCard(label: 'Terbit', time: todaySchedule.terbit),
+                      JadwalShalatCard(
+                        label: 'Dzuhur', 
+                        time: todaySchedule.dzuhur, 
+                        isNext: nextPrayer['name'] == 'Dzuhur'
+                      ),
+                      JadwalShalatCard(
+                        label: 'Ashar', 
+                        time: todaySchedule.ashar, 
+                        isNext: nextPrayer['name'] == 'Ashar'
+                      ),
+                      JadwalShalatCard(
+                        label: 'Maghrib', 
+                        time: todaySchedule.maghrib, 
+                        isNext: nextPrayer['name'] == 'Maghrib'
+                      ),
+                      JadwalShalatCard(
+                        label: 'Isya', 
+                        time: todaySchedule.isya, 
+                        isNext: nextPrayer['name'] == 'Isya'
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
-                // Hanya menampilkan item hari ini
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: [
-                        _buildPrayerRow('Imsak', todaySchedule.imsak, false),
-                        _buildPrayerRow('Subuh', todaySchedule.subuh, nextPrayer['name'] == 'Subuh'),
-                        _buildPrayerRow('Terbit', todaySchedule.terbit, false),
-                        _buildPrayerRow('Dzuhur', todaySchedule.dzuhur, nextPrayer['name'] == 'Dzuhur'),
-                        _buildPrayerRow('Ashar', todaySchedule.ashar, nextPrayer['name'] == 'Ashar'),
-                        _buildPrayerRow('Maghrib', todaySchedule.maghrib, nextPrayer['name'] == 'Maghrib'),
-                        _buildPrayerRow('Isya', todaySchedule.isya, nextPrayer['name'] == 'Isya'),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -140,7 +164,7 @@ class _ShalatPageState extends State<ShalatPage> {
     String nextName = 'Isya';
 
     for (var entry in prayers.entries) {
-      if (entry.value.isEmpty) continue;
+      if (entry.value == '--:--' || entry.value.isEmpty) continue;
       final parts = entry.value.split(':');
       var candidate = DateTime(_currentTime.year, _currentTime.month, _currentTime.day, int.parse(parts[0]), int.parse(parts[1]));
 
@@ -167,11 +191,11 @@ class _ShalatPageState extends State<ShalatPage> {
   Widget _buildHeader(Map<String, String> nextPrayer) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF7C5ABF), Color(0xFF9F7EE6)], // Primary & Secondary
+          colors: [Color(0xFF7C5ABF), Color(0xFF9F7EE6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -194,13 +218,13 @@ class _ShalatPageState extends State<ShalatPage> {
             ),
             child: Text(
               nextPrayer['name']!.toUpperCase(),
-              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.2),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             nextPrayer['countdown']!,
-            style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold, letterSpacing: 2),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -212,65 +236,16 @@ class _ShalatPageState extends State<ShalatPage> {
     );
   }
 
-  Widget _buildPrayerRow(String label, String time, bool isNext) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: isNext ? const Color(0xFFE8DEFF) : Colors.white, // primaryContainer jika aktif
-        borderRadius: BorderRadius.circular(20),
-        border: isNext ? Border.all(color: const Color(0xFF7C5ABF), width: 1.5) : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.access_time_filled_rounded, 
-                color: isNext ? const Color(0xFF7C5ABF) : const Color(0xFFB8975A).withOpacity(0.5),
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
-                  color: const Color(0xFF2A0E5A),
-                ),
-              ),
-            ],
-          ),
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: isNext ? const Color(0xFF7C5ABF) : const Color(0xFF2A0E5A),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildErrorUI(ShalatViewModel vm) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 60, color: Color(0xFFB8975A)),
+          const Icon(Icons.error_outline, size: 60, color: Colors.redAccent),
           const SizedBox(height: 16),
-          Text('Gagal memuat jadwal: ${vm.error}'),
-          TextButton(onPressed: _refreshData, child: const Text('Coba Lagi'))
+          Text('Gagal memuat jadwal: ${vm.error}', textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: _refreshData, child: const Text('Coba Lagi'))
         ],
       ),
     );

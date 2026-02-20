@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dashboard_page.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
-import 'shalat_page.dart';
 import 'chat_page.dart';
-import 'qiblat_page.dart';
 import 'asmaul_husna_page.dart';
-import 'dashboard_page.dart';
-import 'ramadhan/ramadhan_dashboard_card.dart';
+import 'qiblat_page.dart';
+import 'shalat_page.dart';
 
 class HomeNavigationPage extends StatefulWidget {
   const HomeNavigationPage({super.key});
@@ -19,14 +18,13 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
   int _selectedIndex = 0;
 
   static final List<Widget> _pages = <Widget>[
-    DashboardPage(),
-    QuranPage(),
-    DoaPage(),
+    const DashboardPage(),
+    const QuranPage(),
+    const DoaPage(),
     ChatPage(),
-    AsmaulHusnaPage(),
-    QiblatPage(),
-    ShalatPage(),
-    RamadhanDashboardCard(),
+    const AsmaulHusnaPage(),
+    const QiblatPage(),
+    const ShalatPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -38,16 +36,17 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const deepPurple = Color(0xFF2A0E5A);
 
     return Scaffold(
-      // Menggunakan IndexedStack agar state halaman tidak ter-reset saat pindah tab
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -56,8 +55,7 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
         child: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded), // Ikon lebih modern
-              activeIcon: Icon(Icons.grid_view_rounded),
+              icon: Icon(Icons.grid_view_rounded),
               label: 'Beranda',
             ),
             BottomNavigationBarItem(
@@ -73,27 +71,27 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
               label: 'Asisten AI',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.psychology_alt_rounded),
-              label: 'Asmaul_husna',
+              icon: Icon(Icons.mosque_rounded),
+              label: 'Asmaul Husna',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.explore_rounded),
               label: 'Kiblat',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.explore_rounded),
-              label: 'jadwal sholat',
+              icon: Icon(Icons.access_time_filled_rounded),
+              label: 'Jadwal Shalat',
             ),
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: theme.colorScheme.primary,
           unselectedItemColor: Colors.grey[400],
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
+          selectedFontSize: 10, // Ukuran font diperkecil karena item cukup banyak
+          unselectedFontSize: 10,
           showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
+          type: BottomNavigationBarType.fixed, // Tetap gunakan fixed agar label selalu muncul
           backgroundColor: Colors.white,
-          elevation: 0, // Elevation kita handle manual pakai Container Shadow
+          elevation: 0,
           onTap: _onItemTapped,
         ),
       ),
