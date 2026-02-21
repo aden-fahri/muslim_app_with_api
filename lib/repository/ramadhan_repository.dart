@@ -158,4 +158,54 @@ class RamadhanRepository {
       'ceramah': currentCeramah,
     }, onConflict: 'user_id,date');
   }
+
+  // Ambil data 7 hari terakhir
+  Future<List<RamadhanEntry>> getEntriesLast7Days() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    final today = DateTime.now();
+    final startDate = today.subtract(const Duration(days: 7));
+    final startStr = '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+    final endStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    final response = await _client
+        .from('ramadhan_entries')
+        .select()
+        .eq('user_id', user.id)
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', ascending: true);
+
+    return response.map((json) => RamadhanEntry.fromJson(json)).toList();
+  }
+
+  // Ambil SEMUA entry user (untuk total keseluruhan)
+  Future<List<RamadhanEntry>> getAllEntries() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    final response = await _client
+        .from('ramadhan_entries')
+        .select()
+        .eq('user_id', user.id)
+        .order('date', ascending: true);
+
+    return response.map((json) => RamadhanEntry.fromJson(json)).toList();
+  }
+
+  Future<RamadhanEntry?> getEntryByDate(String dateStr) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return null;
+
+    final response = await _client
+        .from('ramadhan_entries')
+        .select()
+        .eq('user_id', user.id)
+        .eq('date', dateStr)
+        .maybeSingle();
+
+    if (response == null || response.isEmpty) return null;
+    return RamadhanEntry.fromJson(response);
+  }
 }

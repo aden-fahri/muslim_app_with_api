@@ -50,9 +50,9 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   await Supabase.initialize(
-    url: 'https://REDACTED.supabase.co', // URL project
+    url: 'YOUR_URL', // URL project
     anonKey:
-        'REDACTED_ANON_KEY', // anon public key
+        'YOUR_ANON_KEY', // anon public key
   );
 
   // Listener auth state change
@@ -85,6 +85,17 @@ Future<void> main() async {
       } else {
         print('Context belum ready saat signedIn');
       }
+
+      Future.delayed(const Duration(milliseconds: 500), () {
+        final context = navigatorKey.currentContext;
+        if (context != null && context.mounted) {
+          try {
+            Provider.of<RamadhanViewModel>(context, listen: false).refreshAllStats();
+          } catch (e) {
+            print('Gagal refresh all stats: $e');
+          }
+        }
+      });
     });
   } else if (event == AuthChangeEvent.signedOut) {
     print('DEBUG: User signed out');

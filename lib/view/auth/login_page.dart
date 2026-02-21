@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../home_navigation_page.dart';
 import 'register_page.dart';
-import 'package:muslim_app/view/home_navigation_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

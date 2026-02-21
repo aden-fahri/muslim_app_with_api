@@ -15,12 +15,30 @@ class RamadhanViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Getter infak & ceramah
+  // Getter infak & ceramah hari ini
   List<Map<String, dynamic>> get todayInfak => _todayEntry?.infak ?? [];
   List<Map<String, dynamic>> get todayCeramah => _todayEntry?.ceramah ?? [];
 
   int get totalInfakHariIni {
     return todayInfak.fold(0, (sum, item) => sum + (item['nominal'] as int? ?? 0));
+  }
+
+  // ── METHOD BARU: Ambil entry berdasarkan tanggal tertentu ──
+  Future<RamadhanEntry?> getEntryByDate(String dateStr) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final entry = await _repository.getEntryByDate(dateStr);
+      return entry;
+    } catch (e) {
+      _error = 'Gagal memuat data tanggal $dateStr: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadTodayEntry() async {
@@ -61,7 +79,7 @@ class RamadhanViewModel extends ChangeNotifier {
     notifyListeners();
 
     _repository.saveEntry(_todayEntry!).catchError((e) {
-      _error = 'Gagal simpan: $e';
+      _error = 'Gagal simpan sholat: $e';
       notifyListeners();
     });
   }
@@ -135,7 +153,7 @@ class RamadhanViewModel extends ChangeNotifier {
       'tema': tema.trim(),
       'sumber': sumber.trim(),
       'durasi': durasiMenit,
-      'rangkuman': rangkuman.trim(), 
+      'rangkuman': rangkuman.trim(),
       'created_at': DateTime.now().toIso8601String(),
     };
 
@@ -191,7 +209,6 @@ class RamadhanViewModel extends ChangeNotifier {
   }) async {
     if (_todayEntry == null || index < 0 || index >= _todayEntry!.ceramah.length) return;
 
-    // Ambil data lama untuk mempertahankan 'created_at'
     final oldItem = _todayEntry!.ceramah[index];
 
     final updatedItem = {
@@ -200,7 +217,7 @@ class RamadhanViewModel extends ChangeNotifier {
       'durasi': durasiMenit,
       'rangkuman': rangkuman.trim(),
       'created_at': oldItem['created_at'],
-      'updated_at': DateTime.now().toIso8601String(), // catat waktu edit
+      'updated_at': DateTime.now().toIso8601String(),
     };
 
     final updatedCeramahList = List<Map<String, dynamic>>.from(_todayEntry!.ceramah);
@@ -216,8 +233,7 @@ class RamadhanViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Kita simpan ulang seluruh entry atau panggil fungsi repository khusus update
-      await _repository.saveEntry(_todayEntry!); 
+      await _repository.saveEntry(_todayEntry!);
     } catch (e) {
       _error = 'Gagal update ceramah: $e';
       notifyListeners();
@@ -228,7 +244,69 @@ class RamadhanViewModel extends ChangeNotifier {
     _todayEntry = null;
     _error = null;
     notifyListeners();
-
     loadTodayEntry();
+  }
+
+  // ── Statistik minggu ini & keseluruhan ──
+  List<RamadhanEntry> _last7Days = [];
+  List<RamadhanEntry> _allEntries = [];
+
+  List<RamadhanEntry> get last7Days => _last7Days;
+  List<RamadhanEntry> get allEntries => _allEntries;
+
+  int get totalSholatMingguIni {
+    int count = 0;
+    for (var entry in _last7Days) {
+      count += entry.sholat.values.where((v) => v).length;
+    }
+    return count;
+  }
+
+  double get totalInfakMingguIni {
+    double sum = 0;
+    for (var entry in _last7Days) {
+      for (var infak in entry.infak) {
+        sum += (infak['nominal'] as num? ?? 0);
+      }
+    }
+    return sum;
+  }
+
+  int get totalCeramahMingguIni => _last7Days.fold(0, (sum, e) => sum + e.ceramah.length);
+
+  int get totalSholatSemua {
+    int count = 0;
+    for (var entry in _allEntries) {
+      count += entry.sholat.values.where((v) => v).length;
+    }
+    return count;
+  }
+
+  double get totalInfakSemua {
+    double sum = 0;
+    for (var entry in _allEntries) {
+      for (var infak in entry.infak) {
+        sum += (infak['nominal'] as num? ?? 0);
+      }
+    }
+    return sum;
+  }
+
+  int get totalCeramahSemua => _allEntries.fold(0, (sum, e) => sum + e.ceramah.length);
+
+  Future<void> refreshAllStats() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await loadTodayEntry();
+      _last7Days = await _repository.getEntriesLast7Days();
+      _allEntries = await _repository.getAllEntries();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

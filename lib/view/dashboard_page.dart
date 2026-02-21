@@ -37,7 +37,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshSchedule();
-
       Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
     });
   }
@@ -47,7 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
     super.didChangeDependencies();
     Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
   }
-  
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -63,6 +62,7 @@ class _DashboardPageState extends State<DashboardPage> {
         );
   }
 
+  // ── Fungsi untuk mendapatkan sholat berikutnya + countdown ──
   Map<String, dynamic> _getNextPrayerInfo(ShalatDaySchedule today) {
     final now = DateTime.now();
     final prayers = {
@@ -76,9 +76,14 @@ class _DashboardPageState extends State<DashboardPage> {
     for (var entry in prayers.entries) {
       if (entry.value.isEmpty) continue;
       final parts = entry.value.split(':');
+      if (parts.length != 2) continue;
+
       final prayerTime = DateTime(
-        now.year, now.month, now.day,
-        int.parse(parts[0]), int.parse(parts[1]),
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
       );
 
       if (prayerTime.isAfter(now)) {
@@ -86,11 +91,108 @@ class _DashboardPageState extends State<DashboardPage> {
         return {
           'name': entry.key,
           'time': entry.value,
-          'remaining': "- ${diff.inHours}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}"
+          'remaining': "- ${diff.inHours}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}",
         };
       }
     }
-    return {'name': 'Subuh', 'time': today.subuh, 'remaining': 'Besok'};
+
+    // Jika sudah lewat Isya → next = Subuh besok
+    final subuhParts = today.subuh.split(':');
+    if (subuhParts.length == 2) {
+      final tomorrowSubuh = DateTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        int.parse(subuhParts[0]),
+        int.parse(subuhParts[1]),
+      );
+      final diff = tomorrowSubuh.difference(now);
+      return {
+        'name': 'Subuh',
+        'time': today.subuh,
+        'remaining': "- ${diff.inHours}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}",
+      };
+    }
+
+    return {'name': '—', 'time': '--:--', 'remaining': ''};
+  }
+
+  // ── Fungsi baru: status sholat SAAT INI + menjelang sholat berikutnya ──
+  Map<String, dynamic> _getPrayerStatus(ShalatDaySchedule today) {
+    final now = DateTime.now();
+
+    final prayerTimes = <String, String>{
+      'Imsak': today.imsak,
+      'Subuh': today.subuh,
+      'Terbit': today.terbit,
+      'Dhuha': today.dhuha,
+      'Dzuhur': today.dzuhur,
+      'Ashar': today.ashar,
+      'Maghrib': today.maghrib,
+      'Isya': today.isya,
+    };
+
+    String? current = '—';
+    String? nextName;
+    DateTime? nextTime;
+    String nextTimeStr = '--:--';
+    String remaining = '';
+
+    // Cari sholat terakhir yang sudah lewat (atau sedang berlangsung)
+    for (var entry in prayerTimes.entries) {
+      if (entry.value.isEmpty) continue;
+      final parts = entry.value.split(':');
+      if (parts.length != 2) continue;
+
+      try {
+        final t = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+
+        if (!t.isAfter(now)) {
+          current = entry.key;
+        } else if (nextTime == null || t.isBefore(nextTime)) {
+          nextName = entry.key;
+          nextTime = t;
+          nextTimeStr = entry.value;
+        }
+      } catch (_) {}
+    }
+
+    // Jika sudah lewat Isya → next = Subuh besok
+    if (nextName == null && today.subuh.isNotEmpty) {
+      nextName = 'Subuh';
+      final parts = today.subuh.split(':');
+      if (parts.length == 2) {
+        nextTime = DateTime(
+          now.year,
+          now.month,
+          now.day + 1,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+        nextTimeStr = today.subuh; // tampilkan jam subuh hari ini (artinya besok)
+      }
+    }
+
+    if (nextTime != null) {
+      final diff = nextTime.difference(now);
+      final h = diff.inHours;
+      final m = diff.inMinutes % 60;
+      final s = diff.inSeconds % 60;
+      remaining = "- ${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}";
+    }
+
+    return {
+      'current': current,
+      'nextName': nextName ?? '—',
+      'nextTime': nextTimeStr,
+      'remaining': remaining,
+    };
   }
 
   @override
@@ -101,28 +203,38 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: const Color(0xFFF8F9FE),
       body: Consumer<ShalatViewModel>(
         builder: (context, vm, child) {
-          final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+          final now = DateTime.now();
+          final todayStr = DateFormat('yyyy-MM-dd').format(now);
           final today = vm.schedules.firstWhere(
             (s) => s.date == todayStr,
             orElse: () => ShalatDaySchedule(
-              tanggal: '', imsak: '', subuh: '', terbit: '', dhuha: '',
-              dzuhur: '', ashar: '', maghrib: '', isya: '', date: todayStr,
+              tanggal: '',
+              imsak: '',
+              subuh: '',
+              terbit: '',
+              dhuha: '',
+              dzuhur: '',
+              ashar: '',
+              maghrib: '',
+              isya: '',
+              date: todayStr,
             ),
           );
 
           final nextPrayer = _getNextPrayerInfo(today);
+          final status = _getPrayerStatus(today);
 
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                _buildHeader(theme, nextPrayer),
+                _buildHeader(theme, nextPrayer, status),
                 Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- Menu Grid ---
+                      // Menu Grid
                       GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -141,7 +253,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
                       const SizedBox(height: 32),
 
-                      // --- Section Jadwal Terdekat ---
                       _buildSectionHeader(theme, 'Jadwal Shalat', 'Terdekat'),
                       const SizedBox(height: 16),
                       JadwalShalatCard(
@@ -154,8 +265,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
 
                       const SizedBox(height: 32),
-                      
-                      // --- Ramadhan Cards ---
+
+                      // Ramadhan Cards
                       const RamadhanDashboardCard(),
                       const SizedBox(height: 16),
                       const RamadhanInfakCard(),
@@ -220,7 +331,9 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildHeader(ThemeData theme, Map<String, dynamic> nextPrayer) {
+  Widget _buildHeader(ThemeData theme, Map<String, dynamic> nextPrayer, Map<String, dynamic> status) {
+    final now = DateTime.now();
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
       decoration: BoxDecoration(
@@ -235,14 +348,11 @@ class _DashboardPageState extends State<DashboardPage> {
               Consumer<ProfileViewModel>(
                 builder: (context, vm, child) {
                   final profile = vm.profile;
-
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
-                        ),
+                        MaterialPageRoute(builder: (context) => const ProfilePage()),
                       );
                     },
                     child: Row(
@@ -252,11 +362,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           backgroundColor: Colors.white.withOpacity(0.25),
                           child: Text(
                             profile?.avatarInitial ?? '?',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -265,18 +371,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             Text(
                               'Assalamu\'alaikum',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 14,
-                              ),
+                              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
                             ),
                             Text(
                               profile?.displayName ?? 'Sahabat',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -287,16 +386,15 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               IconButton(
                 onPressed: () {
-                  // TODO: buka notifikasi kalau sudah ada fiturnya
+                  // TODO: notifikasi
                 },
-                icon: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: Colors.white,
-                ),
+                icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
               ),
             ],
           ),
           const SizedBox(height: 28),
+
+          // ── Bagian waktu sholat yang di-request ──
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -311,23 +409,52 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: Column(
               children: [
-                Text(DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(
+                  DateFormat('EEEE, d MMMM yyyy').format(now),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
                 const SizedBox(height: 20),
+
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    // Kiri: Waktu sekarang + sedang sholat apa
                     Column(
                       children: [
-                        const Text('Waktu Sekarang', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text(DateFormat('HH:mm').format(DateTime.now()), style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Waktu Sekarang',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        Text(
+                          DateFormat('HH:mm').format(now),
+                          style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          status['current'] == '—' ? ' ' : 'Sedang ${status['current']}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 15),
+                        ),
                       ],
                     ),
-                    Container(width: 1, height: 40, color: Colors.white24),
+
+                    Container(width: 1, height: 80, color: Colors.white24),
+
+                    // Kanan: Menjelang sholat berikutnya
                     Column(
                       children: [
-                        Text('${nextPrayer['name']} Berikutnya', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text(nextPrayer['time'], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                        Text(nextPrayer['remaining'], style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                        Text(
+                          'Menjelang ${status['nextName']}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          status['nextTime'],
+                          style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          status['remaining'],
+                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
                       ],
                     ),
                   ],

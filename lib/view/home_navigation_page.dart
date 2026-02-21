@@ -49,6 +49,7 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
     if (index == 0) {
       Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
       Provider.of<RamadhanViewModel>(context, listen: false).refreshTodayEntry();
+      Provider.of<RamadhanViewModel>(context, listen: false).refreshAllStats();
     }
   }
 
