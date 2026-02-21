@@ -12,6 +12,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _namaController = TextEditingController();
   bool _isLoading = false;
   String? _message;
 
@@ -19,9 +20,10 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final nama = _namaController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || password.length < 6) {
-      setState(() => _message = 'Email dan password minimal 6 karakter');
+    if (nama.isEmpty || email.isEmpty || password.isEmpty || password.length < 6) {
+      setState(() => _message = 'Isi nama, email, dan password minimal 6 karakter');
       return;
     }
 
@@ -34,6 +36,7 @@ class _RegisterPageState extends State<RegisterPage> {
       final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
+        data: {'full_name': nama}, // Baru: simpan nama ke metadata
       );
 
       if (response.user != null) {
@@ -122,6 +125,17 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    "Nama Lengkap",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: deepPurple),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _namaController,
+                    label: 'Masukkan nama lengkap',
+                    icon: Icons.person_outline,
+                  ),
+                  const SizedBox(height: 20),
                   const Text(
                     "Email",
                     style: TextStyle(

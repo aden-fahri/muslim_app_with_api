@@ -41,6 +41,10 @@ import 'viewmodel/asmaul_husna_view_model.dart';
 import 'repository/ramadhan_repository.dart';
 import 'viewmodel/ramadhan_view_model.dart';
 
+// Profile
+import 'repository/profile_repository.dart';
+import 'viewmodel/profile_view_model.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -60,6 +64,8 @@ Future<void> main() async {
 
     if (event == AuthChangeEvent.signedIn) {}
   });
+
+  
   runApp(const MyApp());
 }
 
@@ -118,6 +124,14 @@ class MyApp extends StatelessWidget {
         Provider<RamadhanRepository>(create: (_) => RamadhanRepository()),
         ChangeNotifierProvider<RamadhanViewModel>(
           create: (context) => RamadhanViewModel(context.read<RamadhanRepository>()),
+        ),
+
+        // Profile
+        Provider<ProfileRepository>(
+          create: (_) => ProfileRepository(),
+        ),
+        ChangeNotifierProvider<ProfileViewModel>(
+          create: (context) => ProfileViewModel(context.read<ProfileRepository>()),
         ),
       ],
       child: MaterialApp(

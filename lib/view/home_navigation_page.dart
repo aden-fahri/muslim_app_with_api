@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../viewmodel/profile_view_model.dart';
 import 'dashboard_page.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
@@ -27,10 +29,25 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
     const ShalatPage(),
   ];
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Refresh profil setiap kali HomeNavigationPage muncul / dependencies berubah
+    // Ini akan menangkap kasus setelah login ulang
+    final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
+    profileVM.refreshProfile();
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+
+    // Optional: refresh lagi saat pindah ke tab Beranda (index 0)
+    if (index == 0) {
+      Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
+    }
   }
 
   @override

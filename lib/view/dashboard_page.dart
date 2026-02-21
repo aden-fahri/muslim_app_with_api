@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../model/shalat_schedule_response.dart';
+import '../viewmodel/profile_view_model.dart';
 import '../viewmodel/shalat_view_model.dart' hide ShalatPage;
 import 'jadwal shalat/jadwal_shalat_card.dart';
+import 'profile/profile_page.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
 import 'chat_page.dart';
@@ -35,9 +37,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshSchedule();
+
+      Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
+  }
+  
   @override
   void dispose() {
     _timer?.cancel();
@@ -222,23 +232,68 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=mizuki'),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Assalamu\'alaikum!', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14)),
-                      const Text('Mizuki', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
+              Consumer<ProfileViewModel>(
+                builder: (context, vm, child) {
+                  final profile = vm.profile;
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: Colors.white.withOpacity(0.25),
+                          child: Text(
+                            profile?.avatarInitial ?? '?',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Assalamu\'alaikum',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              profile?.displayName ?? 'Sahabat',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded, color: Colors.white)),
+              IconButton(
+                onPressed: () {
+                  // TODO: buka notifikasi kalau sudah ada fiturnya
+                },
+                icon: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 28),
