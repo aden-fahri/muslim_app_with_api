@@ -15,6 +15,12 @@ class RamadhanSholatPage extends StatefulWidget {
 }
 
 class _RamadhanSholatPageState extends State<RamadhanSholatPage> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    Provider.of<RamadhanViewModel>(context, listen: false).refreshTodayEntry();
+  } 
+  
   Timer? _countdownTimer;
   DateTime _now = DateTime.now();
   String _nextPrayerName = 'Memuat...';

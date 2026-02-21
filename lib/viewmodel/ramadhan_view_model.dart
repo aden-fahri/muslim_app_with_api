@@ -223,4 +223,12 @@ class RamadhanViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void refreshTodayEntry() {
+    _todayEntry = null;
+    _error = null;
+    notifyListeners();
+
+    loadTodayEntry();
+  }
 }

@@ -50,24 +50,55 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   await Supabase.initialize(
-    url: 'YOUR_URL', // URL project
+    url: 'https://REDACTED.supabase.co', // URL project
     anonKey:
-        'YOUR_ANON_KEY', // anon public key
+        'REDACTED_ANON_KEY', // anon public key
   );
 
   // Listener auth state change
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-    final event = data.event;
-    final session = data.session;
+  final event = data.event;
+  final session = data.session;
 
-    print('Auth event: $event'); // debug di console
+  print('Auth event: $event'); // debug
 
-    if (event == AuthChangeEvent.signedIn) {}
-  });
+  if (event == AuthChangeEvent.signedIn) {
+    print('DEBUG: User signed in baru → refresh semua data');
 
+    // Delay sedikit supaya session benar-benar ready
+    Future.delayed(const Duration(milliseconds: 300), () {
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        // Refresh profil
+        try {
+          Provider.of<ProfileViewModel>(context, listen: false).refreshProfile();
+        } catch (e) {
+          print('Gagal refresh profil: $e');
+        }
+
+        // Refresh Ramadhan
+        try {
+          Provider.of<RamadhanViewModel>(context, listen: false).refreshTodayEntry();
+        } catch (e) {
+          print('Gagal refresh Ramadhan: $e');
+        }
+      } else {
+        print('Context belum ready saat signedIn');
+      }
+    });
+  } else if (event == AuthChangeEvent.signedOut) {
+    print('DEBUG: User signed out');
+    // Optional: clear data kalau perlu
+  } else if (event == AuthChangeEvent.tokenRefreshed) {
+    print('DEBUG: Token refreshed');
+    // Bisa tambah refresh kalau perlu
+  }
+});
   
   runApp(const MyApp());
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -135,6 +166,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         title: 'Muslim App - MVVM',
         theme: unguLightTheme,

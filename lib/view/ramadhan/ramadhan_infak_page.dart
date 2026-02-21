@@ -12,6 +12,12 @@ class RamadhanInfakPage extends StatefulWidget {
 }
 
 class _RamadhanInfakPageState extends State<RamadhanInfakPage> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    Provider.of<RamadhanViewModel>(context, listen: false).refreshTodayEntry();
+  }
+
   final _nominalController = TextEditingController();
   final _kategoriController = TextEditingController();
   final _catatanController = TextEditingController();

@@ -12,6 +12,12 @@ class RamadhanCeramahPage extends StatefulWidget {
 }
 
 class _RamadhanCeramahPageState extends State<RamadhanCeramahPage> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    Provider.of<RamadhanViewModel>(context, listen: false).refreshTodayEntry();
+  }
+
   final _temaController = TextEditingController();
   final _sumberController = TextEditingController();
   final _durasiController = TextEditingController();
