@@ -5,8 +5,8 @@ import '../viewmodel/ramadhan_view_model.dart';
 import 'dashboard_page.dart';
 import 'quran_page.dart';
 import 'doa_page.dart';
-import 'chat_page.dart';
-import 'asmaul_husna_page.dart';
+// import 'chat_page.dart';
+// import 'asmaul_husna_page.dart';
 import 'qiblat_page.dart';
 import 'shalat_page.dart';
 
@@ -24,8 +24,8 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
     const DashboardPage(),
     const QuranPage(),
     const DoaPage(),
-    ChatPage(),
-    const AsmaulHusnaPage(),
+    // ChatPage(),
+    // const AsmaulHusnaPage(),
     const QiblatPage(),
     const ShalatPage(),
   ];
@@ -86,14 +86,14 @@ class _HomeNavigationPageState extends State<HomeNavigationPage> {
               icon: Icon(Icons.front_hand_rounded),
               label: 'Doa',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.psychology_alt_rounded),
-              label: 'Asisten AI',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.mosque_rounded),
-              label: 'Asmaul Husna',
-            ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.psychology_alt_rounded),
+            //   label: 'Asisten AI',
+            // ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.mosque_rounded),
+            //   label: 'Asmaul Husna',
+            // ),
             BottomNavigationBarItem(
               icon: Icon(Icons.explore_rounded),
               label: 'Kiblat',

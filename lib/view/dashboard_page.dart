@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../model/shalat_schedule_response.dart';
 import '../viewmodel/profile_view_model.dart';
 import '../viewmodel/shalat_view_model.dart' hide ShalatPage;
+import 'dzikir_dashboard/dzikir_card.dart';
 import 'jadwal shalat/jadwal_shalat_card.dart';
 import 'profile/profile_page.dart';
 import 'quran_page.dart';
@@ -267,6 +268,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(height: 32),
 
                       // Ramadhan Cards
+                      const DzikirCard(),
+                      const SizedBox(height: 16),
                       const RamadhanDashboardCard(),
                       const SizedBox(height: 16),
                       const RamadhanInfakCard(),

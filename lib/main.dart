@@ -45,6 +45,10 @@ import 'viewmodel/ramadhan_view_model.dart';
 import 'repository/profile_repository.dart';
 import 'viewmodel/profile_view_model.dart';
 
+// Dzikir
+import 'repository/dzikir_repository.dart';          // sesuaikan 
+import 'viewmodel/dzikir_view_model.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -174,6 +178,16 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<ProfileViewModel>(
           create: (context) => ProfileViewModel(context.read<ProfileRepository>()),
+        ),
+
+        // Dzikir
+        Provider<DzikirRepository>(
+          create: (_) => DzikirRepository(),
+        ),
+        ChangeNotifierProvider<DzikirViewModel>(
+          create: (context) => DzikirViewModel(
+            context.read<DzikirRepository>(),
+          ),
         ),
       ],
       child: MaterialApp(

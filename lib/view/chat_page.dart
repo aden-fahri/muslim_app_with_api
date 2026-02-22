@@ -72,7 +72,7 @@ class ChatPage extends StatelessWidget {
   Widget _buildCustomAppBar(BuildContext context, ChatViewModel viewModel) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.only(top: 20, bottom: 15, left: 16, right: 8),
+      padding: const EdgeInsets.only(top: 40, bottom: 15, left: 16, right: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
